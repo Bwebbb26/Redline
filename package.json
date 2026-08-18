@@ -1,5 +1,5 @@
 {
-  "name": "main-projects",
+  "name": "redline",
   "version": "1.0.0",
   "description": "Compare two versions of a long document and surface what changed, what was softened, and whether it matters, with citations to both sources.",
   "scripts": {
@@ -11,16 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Bwebbb26/Main-Projects.git"
+    "url": "git+https://github.com/Bwebbb26/Redline.git"
   },
   "keywords": [],
   "author": "Brandon Webb",
   "license": "MIT",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/Bwebbb26/Main-Projects/issues"
+    "url": "https://github.com/Bwebbb26/Redline/issues"
   },
-  "homepage": "https://github.com/Bwebbb26/Main-Projects#readme",
+  "homepage": "https://github.com/Bwebbb26/Redline#readme",
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
