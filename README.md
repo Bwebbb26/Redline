@@ -68,7 +68,7 @@ A cheap text diff finds candidate changes, and only those candidates are sent to
 ```bash
 nvm use
 npm install
-cp .env.example .env      # then fill in your values
+cp .env.example .env   
 npm run dev
 ```
  
@@ -119,22 +119,6 @@ Setup instructions land with the implementation in Phase 4.
  
 ---
  
-## Roadmap
- 
-- [ ] **Phase 1 — Backend foundations**
-  - [ ] Week 1: REST API with Zod validation and consistent error handling
-  - [ ] Week 2: PostgreSQL, document versioning schema, migrations
-  - [ ] Week 3: Auth, pagination, test suite, structured logging
-- [ ] **Phase 2 — Ship it**
-  - [ ] Week 4: Docker, AWS deployment, CI/CD pipeline
-- [ ] **Phase 3 — Give it a brain**
-  - [ ] Week 5: Streaming LLM endpoint, versioned prompts, cost logging
-  - [ ] Week 6: Embeddings, section alignment, the diff engine
-- [ ] **Phase 4 — Trust and tools**
-  - [ ] Week 7: Eval suite in CI, prompt injection guardrails, `SAFETY.md`
-  - [ ] Week 8: Multi-step agent with traced runs, MCP server, demo
----
- 
 ## Design notes
  
 Decisions worth explaining, recorded as they are made.
@@ -146,8 +130,18 @@ Decisions worth explaining, recorded as they are made.
 **Retrieved content is untrusted input.** Source documents are third-party text, so they are a viable indirect prompt injection vector. Retrieved passages are delimited and marked as data rather than instructions. See `SAFETY.md`.
  
 **Evals gate prompt changes.** The system is non-deterministic, so "it worked when I tried it" is not evidence. Prompt and retrieval changes run against a scored eval set in CI.
- 
+
 ---
- 
+
+## Notes
+
+### Express.js
+
+Express is a lightweight web framework for Node.js that makes it easy to build APIs and backend services without a lot of boilerplate. Switching from a more manual HTML-style switch setup to Express statements cuts down on code and keeps the logic much cleaner and easier to follow.
+
+It’s especially useful for REST APIs, internal tools, auth flows, and backend services that need to handle HTTP requests, validate data, and connect to databases or AI tools. It does well when you want to move fast, keep routes organized, and use middleware to handle repeated pieces of logic without overcomplicating the app.
+
+---
+
 ## License
  
