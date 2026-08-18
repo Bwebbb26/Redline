@@ -1,0 +1,92 @@
+{
+  "documents": [
+    {
+      "file": "BEN_10K_2024.html",
+      "filer": "FRANKLIN RESOURCES, INC.",
+      "cik": "0000038777",
+      "form": "10-K",
+      "periodEnd": "2024-09-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0000038777/000003877724000129/ben-20240930.htm"
+    },
+    {
+      "file": "BEN_10K_2025.html",
+      "filer": "FRANKLIN RESOURCES, INC.",
+      "cik": "0000038777",
+      "form": "10-K",
+      "periodEnd": "2025-09-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0000038777/000003877725000127/ben-20250930.htm"
+    },
+    {
+      "file": "BLACKROCK_10K_2024.html",
+      "filer": "BlackRock, Inc.",
+      "cik": "0002012383",
+      "form": "10-K",
+      "periodEnd": "2024-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0002012383/000119312524229601/blk-20241231.htm"
+    },
+    {
+      "file": "BLACKROCK_10K_2025.html",
+      "filer": "BlackRock, Inc.",
+      "cik": "0002012383",
+      "form": "10-K",
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0002012383/000095017025026584/blk-20251231.htm"
+    },
+    {
+      "file": "BLACKROCK_10Q_2025.html",
+      "filer": "BlackRock, Inc.",
+      "cik": "0002012383",
+      "form": "10-Q",
+      "periodEnd": "2025-06-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0002012383/000095017025072082/blk-20250630.htm"
+    },
+    {
+      "file": "CONSTELLATION_10K_2024.html",
+      "filer": "CONSTELLATION ENERGY CORPORATION",
+      "cik": "0001868275",
+      "form": "10-K",
+      "periodEnd": "2024-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001868275/000186827524000014/ceg-20241231x10k.htm"
+    },
+    {
+      "file": "CONSTELLATION_10K_2025.html",
+      "filer": "CONSTELLATION ENERGY CORPORATION",
+      "cik": "0001868275",
+      "form": "10-K",
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001868275/000186827526001780/ceg-20251231x10k.htm"
+    },
+    {
+      "file": "EXELON_10K_2024.html",
+      "filer": "EXELON CORPORATION",
+      "cik": "0001109357",
+      "form": "10-K",
+      "periodEnd": "2024-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001109357/000110935724000053/exc-20241231x10k.htm"
+    },
+    {
+      "file": "EXELON_10K_2025.html",
+      "filer": "EXELON CORPORATION",
+      "cik": "0001109357",
+      "form": "10-K",
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001109357/000110935725000053/exc-20251231x10k.htm"
+    },
+    {
+      "file": "TROWEPRICE_10K_2024.html",
+      "filer": "PRICE T ROWE GROUP INC",
+      "cik": "0001113169",
+      "form": "10-K",
+      "periodEnd": "2024-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001113169/000111316924000007/trow-20241231.htm"
+    },
+    {
+      "file": "TROWEPRICE_10K_2025.html",
+      "filer": "PRICE T ROWE GROUP INC",
+      "cik": "0001113169",
+      "form": "10-K",
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0001113169/000111316925000006/trow-20251231.htm"
+    }
+  ]
+}

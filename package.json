@@ -1,6 +1,6 @@
 {
   "name": "redline",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Compare two versions of a long document and surface what changed, what was softened, and whether it matters, with citations to both sources.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -1,8 +1,8 @@
-# Document Change Intelligence
+# Redline — Document Change Intelligence
  
-Redline, Feed it two versions of a long governing document and it tells you **what changed, what was quietly softened or removed, and whether it matters** — with citations to the exact passage on both sides.
+Feed it two versions of a long governing document and it tells you **what changed, what was quietly softened or removed, and whether it matters** — with citations to the exact passage on both sides.
  
-**Status:** In active development. See [Roadmap](#roadmap).
+**Status:** In active development. The REST API and document resource are being built now; comparison, retrieval, and the agent land in later phases and are documented as they ship.
  
 ---
  
@@ -14,7 +14,7 @@ Keyword search does not solve this. The changes that matter most are rewordings,
  
 This service does that comparison and reports only what is material, with the source text from both versions attached so the answer can be verified rather than trusted.
  
-**Demo corpus:** two consecutive SEC 10-K filings, because they are public domain and freely available. The system is domain agnostic — the same pipeline handles FERC and NERC rules, CMS and HIPAA guidance, contracts, or policy documents.
+**Demo corpus:** consecutive SEC 10-K filings from five issuers across two sectors — Constellation and Exelon in energy, Franklin Resources, T. Rowe Price, and BlackRock in asset management. Public domain, freely available, and paired so every filing has a prior year to diff against. The system is domain agnostic: the same pipeline handles FERC and NERC rules, CMS and HIPAA guidance, contracts, or policy documents.
  
 **Example query:**
  
@@ -68,7 +68,7 @@ A cheap text diff finds candidate changes, and only those candidates are sent to
 ```bash
 nvm use
 npm install
-cp .env.example .env   
+cp .env.example .env      # then fill in your values
 npm run dev
 ```
  
@@ -94,11 +94,11 @@ The API starts on the port set in `.env` (default 3000).
 | `GET` | `/documents` | List documents (paginated) |
 | `GET` | `/documents/:id` | Fetch a single document with its versions |
 | `DELETE` | `/documents/:id` | Remove a document |
- 
+
 Endpoints for comparison, retrieval, and the agent are added in later phases and documented as they land.
- 
+
 All errors return a consistent shape:
- 
+
 ```json
 {
   "error": {
@@ -130,8 +130,3 @@ Decisions worth explaining, recorded as they are made.
 **Retrieved content is untrusted input.** Source documents are third-party text, so they are a viable indirect prompt injection vector. Retrieved passages are delimited and marked as data rather than instructions. See `SAFETY.md`.
  
 **Evals gate prompt changes.** The system is non-deterministic, so "it worked when I tried it" is not evidence. Prompt and retrieval changes run against a scored eval set in CI.
-
----
-
-## License
- 
