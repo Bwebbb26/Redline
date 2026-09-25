@@ -1,33 +1,34 @@
-import { Router } from "express";
-
-const router = Router();
-const create = async (input: {
+type DocumentInput = {
   filer: string;
   cik: string;
   form: string;
   periodEnd: string;
   sourceUrl: string;
-}) => {
-  const id = crypto.randomUUID();
-  const newDocument = { id, ...input };
-
-  return newDocument;
 };
-router.post("/", async (req, res) => {
-  const { filer, cik, form, periodEnd, sourceUrl } = req.body;
-  try {
-    const newDocument = await create({
-      filer,
-      cik,
-      form,
-      periodEnd,
-      sourceUrl,
-    });
-    res.status(201).json(newDocument);
-  } catch (error) {
-    console.error("Error creating document:", error);
-    res.status(500).json({ error: "Failed to create document" });
-  }
-});
+type StoredDocument = DocumentInput & {
+  id: string;
+};
+const documents: StoredDocument[] = [];
 
-export default router;
+export const create = (document: DocumentInput): StoredDocument => {
+  const id = crypto.randomUUID();
+  const storedDocument = { ...document, id };
+  documents.push(storedDocument);
+  return storedDocument;
+};
+
+export const list = (): StoredDocument[] => {
+  return documents;
+};
+
+export const getById = (id: string): StoredDocument | undefined => {
+  return documents.find((doc) => doc.id === id);
+};
+
+export const remove = (id: string): StoredDocument | undefined => {
+  const index = documents.findIndex((doc) => doc.id === id);
+  if (index !== -1) {
+    return documents.splice(index, 1)[0];
+  }
+  return undefined;
+};

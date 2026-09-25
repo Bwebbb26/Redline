@@ -84,3 +84,19 @@ code evaluates, so the ordering problem can't exist.
 **Lesson:** module-scope side effects create invisible ordering constraints between
 files. Enforce them at the platform level, not with a comment asking people not to
 reorder imports.
+
+## Delete behavior
+
+For `DELETE /documents/:id`, return `204 No Content` when the document exists
+and is removed. Return `404 Not Found` when the requested document does not
+exist at the time of the request.
+
+I chose `404` for a missing document because the caller targeted a specific
+ID. A missing document may indicate a mistyped ID, stale data, or an earlier
+deletion. Returning `404` makes that situation visible so the caller can
+double-check the ID or investigate why it is already gone. Returning `204`
+would also be defensible because the desired final state, "the document does
+not exist," is already true, and DELETE is idempotent. However, silently
+returning success could make the caller believe it deleted an existing
+document. The store should represent absence as `undefined`, while the route
+translates that result into the HTTP `404` response.
