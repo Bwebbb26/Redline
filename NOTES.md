@@ -12,25 +12,27 @@ and FY2025 10-K, and which of those changes are material?
 3. What changed in Franklin Resources' risk factors between FY2024 and FY2025?
    (Franklin's fiscal year ends Sept 30 — this one exercises the non-calendar path.)
 
-**Negative cases — the system should refuse these, not answer them.** 4. Compare BlackRock's Q2 2025 10-Q against its prior quarter.
-→ no counterpart in the corpus; expect a clear 4xx, not an empty diff. 5. What changed between BlackRock's 10-Q and its FY2025 10-K?
-→ form-type mismatch; refuse rather than align across incompatible documents. 6. What does Constellation's FY2026 10-K say about nuclear outages?
-→ not in the corpus; expect "not in these documents," never a guess.
+**Negative cases — the system should refuse these, not answer them.**
 
-**Later, once peer comparison exists.** 7. How does Constellation's FY2025 risk-factor language on regulatory exposure
-compare to Exelon's?## Express.js
+4. Compare BlackRock's Q2 2025 10-Q against its prior quarter.
+   → no counterpart in the corpus; expect a clear 4xx, not an empty diff.
+5. What changed between BlackRock's 10-Q and its FY2025 10-K?
+   → form-type mismatch; refuse rather than align across incompatible documents.
+6. What does Constellation's FY2026 10-K say about nuclear outages?
+   → not in the corpus; expect "not in these documents," never a guess.
 
-Express is a lightweight web framework for Node.js that makes it easy to build APIs and backend services without a lot of boilerplate. Switching from a more manual HTML-style switch setup to Express statements cuts down on code and keeps the logic much cleaner and easier to follow.
+**Later, once peer comparison exists.**
 
-It’s especially useful for REST APIs, internal tools, auth flows, and backend services that need to handle HTTP requests, validate data, and connect to databases or AI tools. It does well when you want to move fast, keep routes organized, and use middleware to handle repeated pieces of logic without overcomplicating the app.
+7. How does Constellation's FY2025 risk-factor language on regulatory exposure
+   compare to Exelon's?
 
 ## What Express takes off my hands
 
-Express owns the HTTP plumbing and dispatch loop: it receives a request, walks through the registered middleware and routes in order, and sends the response or forwards an error. That means I do not have to build the server loop, manually inspect every URL and method, or repeat shared request handling. My code owns the route handlers, validation, database work, and document-comparison logic. In this project, that Express wiring is still to be implemented.
+Express owns the HTTP plumbing and dispatch loop: it receives a request, walks through the registered middleware and routes in order, and sends the response or forwards an error. That means I do not have to build the server loop, manually inspect every URL and method, or repeat shared request handling. My code owns the route handlers, validation, database work, and document-comparison logic.
 
 ## What is still fuzzy
 
-The parts I would reread before an interview are the boundaries between the Express layer and the application layer, how a request moves through middleware into a handler, and how errors travel through that chain. The project also still has open implementation work around database persistence, document ingestion, version grouping, section alignment, retrieval, and the agent workflow. The intended flow is clear, but those pieces are not fully wired yet.
+The parts I would reread before an interview are the boundaries between the Express layer and the application layer, how a request moves through middleware into a handler, and how errors travel through that chain.
 
 ## Corpus shape
 
@@ -78,8 +80,9 @@ the environment-loading import and the config read together keeps the ordering
 hazard in one file.
 
 **Lesson:** module-scope side effects create invisible ordering constraints between
-files. Enforce them at the platform level, not with a comment asking people not to
-reorder imports.
+files. Keep them inside one module where the order is visible, or remove them at
+the platform level with `--env-file`; never rely on a comment asking people not to reorder
+imports.
 
 ## Delete behavior
 

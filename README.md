@@ -2,7 +2,9 @@
 
 Feed it two versions of a long governing document and it reports **what changed, what was quietly softened or removed, and whether it matters**, citing the exact passage on both sides.
 
-> **Build status: week 2 of an 8-week build.** Running today: an Express and TypeScript API with config, a health endpoint, and the demo corpus committed. Persistence, retrieval, the diff engine, evals, and the agent are scheduled below and get documented as they land. Everything in this README marked "planned" is not written yet.
+> **In active development.** Built in the phases below; each completed phase
+> ships as a tagged release, so [Releases](https://github.com/Bwebbb26/Redline/releases)
+> is the current status.
 
 ---
 
@@ -14,7 +16,7 @@ Keyword search does not solve this. The changes that matter most are rewordings,
 
 This service does that comparison and reports only what is material, with the source text from both versions attached so the answer can be verified rather than trusted.
 
-**The demo question it has to answer:** what risk-factor language did a filer soften between its 2024 and 2025 10-K, and does it matter?
+**The demo question it has to answer:** what risk-factor language did Constellation soften or remove between its FY2024 and FY2025 10-K, and which of those changes are material?
 
 ### Why this is not another PDF chatbot
 
@@ -34,25 +36,23 @@ Manifest with source URLs and cover-page dates: [`docs/corpus.json`](docs/corpus
 
 ---
 
-## Where the build is
+## Build phases
 
-| Phase | Scope                                                          | Status      |
-| ----- | -------------------------------------------------------------- | ----------- |
-| Setup | Repo, TypeScript, Express, corpus, manifest                    | Done        |
-| 1     | REST API: documents resource, Zod validation, error handling   | In progress |
-| 2     | PostgreSQL, schema with document versions, migrations, seed    | Planned     |
-| 3     | Auth, pagination, Jest and Supertest suite, structured logging | Planned     |
-| 4     | Docker, AWS deploy, GitHub Actions CI/CD                       | Planned     |
-| 5     | Claude API, streaming, versioned prompts, cost logging         | Planned     |
-| 6     | Ingestion, pgvector embeddings, section alignment, diff engine | Planned     |
-| 7     | Eval set scored in CI, citation checking, injection guardrails | Planned     |
-| 8     | Agent loop, MCP server, demo                                   | Planned     |
-
-Releases are tagged weekly. `0.x` means the interface may still change.
+| Phase | Scope                                                          |
+| ----- | -------------------------------------------------------------- |
+| Setup | Repo, TypeScript, Express, corpus, manifest                    |
+| 1     | REST API: documents resource, Zod validation, error handling   |
+| 2     | PostgreSQL, schema with document versions, migrations, seed    |
+| 3     | Auth, pagination, Jest and Supertest suite, structured logging |
+| 4     | Docker, AWS deploy, GitHub Actions CI/CD                       |
+| 5     | Claude API, streaming, versioned prompts, cost logging         |
+| 6     | Ingestion, pgvector embeddings, section alignment, diff engine |
+| 7     | Eval set scored in CI, citation checking, injection guardrails |
+| 8     | Agent loop, MCP server, demo                                   |
 
 ---
 
-## Running it today
+## Running it
 
 ```bash
 nvm use
@@ -65,7 +65,13 @@ npm run dev
 curl -i localhost:3000/health
 ```
 
-No database or API key is needed yet. Both arrive in phases 2 and 5, and this section gets updated when they do.
+```bash
+curl -i -X POST localhost:3000/documents \
+    -H "Content-Type: application/json" \
+    -d '{"filer":"BlackRock, Inc.","cik":"0002012383","form":"10-K","periodEnd":"2025-12-31","sourceUrl":"https://www.sec.gov/Archives/edgar/data/0002012383/000095017025026584/blk-20251231.htm"}'
+
+curl -i localhost:3000/documents
+```
 
 | Command             | What it does                  |
 | ------------------- | ----------------------------- |
@@ -75,13 +81,13 @@ No database or API key is needed yet. Both arrive in phases 2 and 5, and this se
 
 ### API
 
-| Method   | Path             | Status  |
-| -------- | ---------------- | ------- |
-| `GET`    | `/health`        | Live    |
-| `POST`   | `/documents`     | Phase 1 |
-| `GET`    | `/documents`     | Phase 1 |
-| `GET`    | `/documents/:id` | Phase 1 |
-| `DELETE` | `/documents/:id` | Phase 1 |
+| Method   | Path             |
+| -------- | ---------------- |
+| `GET`    | `/health`        |
+| `POST`   | `/documents`     |
+| `GET`    | `/documents`     |
+| `GET`    | `/documents/:id` |
+| `DELETE` | `/documents/:id` |
 
 ---
 
@@ -104,14 +110,13 @@ Documents are ingested with their structure intact, so sections survive as first
 
 A cheap text diff finds candidate changes, and only those candidates are sent to a model for a materiality judgment. That ordering keeps cost proportional to what actually changed rather than to document length.
 
-**Planned stack:** PostgreSQL with pgvector, S3, Claude API behind a provider-agnostic interface, Model Context Protocol server, Jest and Supertest, promptfoo evals in CI, Docker, AWS, GitHub Actions, Pino.
-**In use today:** Node.js (see `.nvmrc`), TypeScript, ES modules, Express 5, Zod.
+**Stack:** TypeScript, Node.js, Express 5, Zod, PostgreSQL with pgvector, S3, Claude API behind a provider-agnostic interface, Model Context Protocol, Jest and Supertest, promptfoo, Docker, AWS, GitHub Actions, Pino.
 
 ---
 
 ## Design notes
 
-Decisions and the reasoning behind them, recorded as they are made.
+The design decisions the build commits to, and why.
 
 **Sections are first-class.** Chunking a filing into fixed-size windows destroys the structure that makes cross-version alignment possible. Sections get extracted during ingestion and chunks never span a section boundary.
 
@@ -121,7 +126,7 @@ Decisions and the reasoning behind them, recorded as they are made.
 
 **Nothing outside the store layer knows how data is stored.** Route files never import a database client. That is what makes the phase 2 swap from an in-memory array to PostgreSQL a change to one file rather than a rewrite.
 
-**Retrieved content is untrusted input.** Source documents are third-party text, which makes them a viable indirect prompt injection vector. The plan is to delimit retrieved passages and mark them as data rather than instructions, then validate output shape before returning. Written up in `SAFETY.md` in phase 7.
+**Retrieved content is untrusted input.** Source documents are third-party text, which makes them a viable indirect prompt injection vector. Retrieved passages get delimited and marked as data rather than instructions, and output shape is validated before anything is returned.
 
 **Evals gate prompt changes.** The system is non-deterministic, so "it worked when I tried it" is not evidence. Prompt and retrieval changes run against a scored eval set in CI, including citation accuracy checked deterministically so a fabricated source fails the build.
 

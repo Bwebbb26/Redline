@@ -31,19 +31,16 @@ accepts. Users bring their own documents.
 
 ---
 
-## Pending, write these as they happen
+## Delete behavior
 
-These need entries before the build ends. Written the day decided, not reconstructed later.
+**Chose:** return `204 No Content` when a document exists and is removed, and
+return `404 Not Found` when the requested document does not exist at the time
+of the request.
 
-- [ ] Store isolation: why routes never import a database client
-- [ ] `period_end` ordering rather than sorting on the version label
-- [ ] DELETE on a missing record: 404 or 204
-- [ ] Prisma vs Drizzle
-- [ ] Index choices, each justified against a specific query
-- [ ] Sessions vs JWTs
-- [ ] Fargate vs Lambda
-- [ ] Embedding provider and dimension count
-- [ ] Chunk strategy, **with the Week 6 measurement, not a rationale**
-- [ ] Hybrid search vs pure vector
-- [ ] Model tiering: what gets the small model and what escalates
-- [ ] Workflow vs agent: the specific step that makes the path unknowable in advance
+**Why:** the caller targeted a specific ID, so `404` makes a missing document
+visible as a possible typo, stale reference, or earlier deletion. Returning
+`204` for a missing document would also be defensible because the desired final
+state, "the document does not exist," is already true and DELETE is idempotent.
+However, silently returning success could make the caller believe it deleted an
+existing document. The store represents absence as `undefined`, while the
+route translates that result into the HTTP `404` response.
