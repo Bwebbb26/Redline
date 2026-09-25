@@ -1,4 +1,4 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express } from "express";
 import healthCheck from "./routes/healthCheck.js";
 import documents from "./routes/documents.js";
 

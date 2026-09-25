@@ -26,7 +26,7 @@ It’s especially useful for REST APIs, internal tools, auth flows, and backend 
 
 ## What Express takes off my hands
 
-Express owns the HTTP plumbing and dispatch loop: it receives a request, walks through the registered middleware and routes in order, and sends the response or forwards an error. That means I do not have to build the server loop, manually inspect every URL and method, or repeat shared request handling. My code owns the route handlers, validation, database work, and document-comparison logic. In this project, that Express wiring is still to be implemented; `src/app.ts` and `src/index.ts` are currently empty.
+Express owns the HTTP plumbing and dispatch loop: it receives a request, walks through the registered middleware and routes in order, and sends the response or forwards an error. That means I do not have to build the server loop, manually inspect every URL and method, or repeat shared request handling. My code owns the route handlers, validation, database work, and document-comparison logic. In this project, that Express wiring is still to be implemented.
 
 ## What is still fuzzy
 
@@ -72,14 +72,10 @@ The response type is the request type plus what the server generates."
 `config.ts` reads `process.env` at **import time**, so it fails fast — but that
 creates an ordering dependency.
 
-ES imports evaluate top to bottom. If I load env with `import 'dotenv/config'` in
-`index.ts`, it must come _before_ the config import. Put it second and config runs
-against an empty `process.env`, silently falls back to defaults, and the app starts
-anyway — ignoring my `.env`. Nothing marks that line as order-sensitive, so an
-organize-imports command breaks it without touching logic.
-
-I used `node --env-file=.env` instead: the environment is populated before any of my
-code evaluates, so the ordering problem can't exist.
+ES imports evaluate top to bottom. The code uses `import "dotenv/config"` as the
+first line of `config.ts`, in the same module that reads `process.env`. Keeping
+the environment-loading import and the config read together keeps the ordering
+hazard in one file.
 
 **Lesson:** module-scope side effects create invisible ordering constraints between
 files. Enforce them at the platform level, not with a comment asking people not to

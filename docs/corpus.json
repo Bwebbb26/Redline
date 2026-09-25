@@ -38,7 +38,9 @@
       "cik": "0002012383",
       "form": "10-Q",
       "periodEnd": "2025-06-30",
-      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0002012383/000095017025072082/blk-20250630.htm"
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/0002012383/000095017025072082/blk-20250630.htm",
+      "role": "negative-fixture",
+      "note": "Unpaired on purpose to test form-type filtering and the no-counterpart path."
     },
     {
       "file": "CONSTELLATION_10K_2024.html",

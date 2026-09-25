@@ -20,7 +20,7 @@ router.get("/:id", (req, res) => {
 router.post("/", (req, res) => {
   const { filer, cik, form, periodEnd, sourceUrl } = req.body;
   const storedDocument = create({ filer, cik, form, periodEnd, sourceUrl });
-  res.status(201).json(storedDocument);
+  res.status(201).json({ data: storedDocument });
 });
 
 router.delete("/:id", (req, res) => {

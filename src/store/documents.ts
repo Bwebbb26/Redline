@@ -18,7 +18,7 @@ export const create = (document: DocumentInput): StoredDocument => {
 };
 
 export const list = (): StoredDocument[] => {
-  return documents;
+  return [...documents];
 };
 
 export const getById = (id: string): StoredDocument | undefined => {
