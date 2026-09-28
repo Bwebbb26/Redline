@@ -1,13 +1,5 @@
-type DocumentInput = {
-  filer: string;
-  cik: string;
-  form: string;
-  periodEnd: string;
-  sourceUrl: string;
-};
-type StoredDocument = DocumentInput & {
-  id: string;
-};
+import type { DocumentInput, StoredDocument } from "../schemas/document.js";
+
 const documents: StoredDocument[] = [];
 
 export const create = (document: DocumentInput): StoredDocument => {

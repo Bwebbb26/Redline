@@ -1,35 +1,55 @@
 import { Router } from "express";
 import { create, list, getById, remove } from "../store/documents.js";
+import { validateRequest } from "../middleware/validateRequest.js";
+import {
+  documentCreateSchema,
+  documentListQuerySchema,
+  documentParamsSchema,
+} from "../schemas/document.js";
+import type { DocumentParams } from "../schemas/document.js";
+import { HttpError } from "../middleware/errorHandler.js";
 const router = Router();
 
-router.get("/", (req, res) => {
-  const documentList = list();
-  res.json({ data: documentList });
-});
+router.get(
+  "/",
+  validateRequest(documentListQuerySchema, "query"),
+  (req, res) => {
+    const documentList = list();
+    res.json({ data: documentList });
+  },
+);
 
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  const document = getById(id);
-  if (document) {
-    res.json({ data: document });
-  } else {
-    res.status(404).json({ error: "Document not found" });
-  }
-});
+router.get(
+  "/:id",
+  validateRequest(documentParamsSchema, "params"),
+  (req, res, next) => {
+    const { id } = req.params as DocumentParams;
+    const document = getById(id);
+    if (!document) {
+      return next(new HttpError(404, "Not Found", "Document not found"));
+    } else {
+      res.json({ data: document });
+    }
+  },
+);
 
-router.post("/", (req, res) => {
+router.post("/", validateRequest(documentCreateSchema, "body"), (req, res) => {
   const { filer, cik, form, periodEnd, sourceUrl } = req.body;
   const storedDocument = create({ filer, cik, form, periodEnd, sourceUrl });
   res.status(201).json({ data: storedDocument });
 });
 
-router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const removedDocument = remove(id);
-  if (!removedDocument) {
-    res.status(404).json({ error: "Document not found" });
-  } else {
-    res.status(204).send();
-  }
-});
+router.delete(
+  "/:id",
+  validateRequest(documentParamsSchema, "params"),
+  (req, res, next) => {
+    const { id } = req.params as DocumentParams;
+    const removedDocument = remove(id);
+    if (!removedDocument) {
+      return next(new HttpError(404, "Not Found", "Document not found"));
+    } else {
+      res.status(204).send();
+    }
+  },
+);
 export default router;

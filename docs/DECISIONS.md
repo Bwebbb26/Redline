@@ -44,3 +44,24 @@ state, "the document does not exist," is already true and DELETE is idempotent.
 However, silently returning success could make the caller believe it deleted an
 existing document. The store represents absence as `undefined`, while the
 route translates that result into the HTTP `404` response.
+
+---
+
+## Zod for API contracts
+
+**Chose:** Zod schemas for request bodies and route parameters, with TypeScript
+types inferred from those schemas.
+
+**Why:** TypeScript checks code at compile time, but it cannot validate data
+sent to a running API. Zod makes the boundary executable: incoming data can be
+checked at runtime, invalid requests can be rejected consistently, and the
+schema can generate the corresponding TypeScript type so the two contracts do
+not drift apart. The create schema also excludes the server-owned `id`, so
+clients cannot provide or overwrite it.
+
+**Alternative:** hand-written TypeScript types alone are simpler, but they do
+not protect the application from malformed or untrusted HTTP input.
+
+**Would change my mind:** if the API became entirely internal with trusted,
+compile-time-controlled callers, or if validation requirements grew beyond
+what Zod expresses clearly, another runtime contract library could be better.
