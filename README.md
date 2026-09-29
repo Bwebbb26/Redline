@@ -54,6 +54,9 @@ Manifest with source URLs and cover-page dates: [`docs/corpus.json`](docs/corpus
 
 ## Running it
 
+Requires Node 24 (pinned in `.nvmrc`) and npm. No database yet — phase 1 keeps
+documents in memory, so `DATABASE_URL` only has to be present, not reachable.
+
 ```bash
 nvm use
 npm install
@@ -81,13 +84,71 @@ curl -i localhost:3000/documents
 
 ### API
 
-| Method   | Path             |
-| -------- | ---------------- |
-| `GET`    | `/health`        |
-| `POST`   | `/documents`     |
-| `GET`    | `/documents`     |
-| `GET`    | `/documents/:id` |
-| `DELETE` | `/documents/:id` |
+| Method   | Path             | What it does                  | Success                      | Errors       |
+| -------- | ---------------- | ----------------------------- | ---------------------------- | ------------ |
+| `GET`    | `/health`        | Liveness check                | `200` `{ status, uptime }`   | —            |
+| `POST`   | `/documents`     | Register a document           | `201` `{ data: document }`   | `400`, `422` |
+| `GET`    | `/documents`     | List registered documents     | `200` `{ data: [document] }` | —            |
+| `GET`    | `/documents/:id` | Fetch one document            | `200` `{ data: document }`   | `400`, `404` |
+| `DELETE` | `/documents/:id` | Remove a document             | `204` no body                | `400`, `404` |
+
+`:id` is a UUID the server generates on create. A document is a record describing a
+filing, not the filing itself — the documents in `data/` are not read until phase 6.
+
+#### Request body — `POST /documents`
+
+| Field       | Type   | Constraint             | Example                     |
+| ----------- | ------ | ---------------------- | --------------------------- |
+| `filer`     | string | non-empty              | `Constellation Energy Corp` |
+| `cik`       | string | exactly 10 digits      | `0001868275`                |
+| `form`      | string | non-empty              | `10-K`                      |
+| `periodEnd` | string | ISO date, `YYYY-MM-DD` | `2024-12-31`                |
+| `sourceUrl` | string | `http` or `https` URL  | `https://www.sec.gov/...`   |
+
+`id` is server-owned. Any `id` sent in the request body is ignored, never stored.
+
+### Error shape
+
+Every error response in the app has one shape, built in a single place. No route
+constructs one by hand. The shape is [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457),
+served as `application/problem+json`:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Document not found"
+}
+```
+
+**`400` vs `422`.** `400` means the request was malformed — unparseable JSON, a field
+of the wrong type, a missing required field, or an `:id` that is not a UUID. `422`
+means the body was well-formed but carried values that failed a rule. Validation
+failures add an `errors` array with one entry per offending field:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "Invalid input",
+  "errors": [
+    {
+      "code": "invalid_format",
+      "format": "regex",
+      "path": ["cik"],
+      "message": "CIK must be 10 digits"
+    },
+    {
+      "code": "invalid_format",
+      "format": "url",
+      "path": ["sourceUrl"],
+      "message": "Invalid URL"
+    }
+  ]
+}
+```
 
 ---
 
