@@ -26,7 +26,7 @@ router.get(
     const { id } = req.params as DocumentParams;
     const document = getById(id);
     if (!document) {
-      return next(new HttpError(404, "Not Found", "Document not found"));
+      return next(new HttpError(404, "Document not found"));
     } else {
       res.json({ data: document });
     }
@@ -46,7 +46,7 @@ router.delete(
     const { id } = req.params as DocumentParams;
     const removedDocument = remove(id);
     if (!removedDocument) {
-      return next(new HttpError(404, "Not Found", "Document not found"));
+      return next(new HttpError(404, "Document not found"));
     } else {
       res.status(204).send();
     }
