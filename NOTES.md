@@ -99,3 +99,93 @@ not exist," is already true, and DELETE is idempotent. However, silently
 returning success could make the caller believe it deleted an existing
 document. The store should represent absence as `undefined`, while the route
 translates that result into the HTTP `404` response.
+
+---
+
+# SQL notes
+
+Decisions and gotchas from week 2. The keyword reference lives at sqlbolt.com and
+does not need copying here.
+
+## Clause order is not written order
+
+```
+FROM / JOIN  →  WHERE  →  GROUP BY  →  HAVING  →  SELECT  →  ORDER BY  →  LIMIT
+```
+
+This explains most early confusion. A `SELECT` alias is unusable in `WHERE`, which
+has already been evaluated, but is fine in `ORDER BY`. `WHERE` filters rows before
+grouping and `HAVING` filters groups after, which is why a condition on `COUNT(*)`
+can only go in `HAVING`.
+
+## NULL is unknown, not empty
+
+- `NULL = NULL` evaluates to `NULL`, not true. `IS NULL` is the only valid test.
+- `COUNT(*)` counts rows; `COUNT(column)` counts non-NULL values. Different answers.
+- `x NOT IN (1, NULL)` is never true. Use `NOT EXISTS`. This one fails silently
+  rather than erroring, which makes it worth remembering.
+
+## Two joins worth knowing by name
+
+**Anti-join** — `LEFT JOIN ... WHERE right.id IS NULL` returns rows with no
+counterpart. This is the shape of the whole project: risk factors present in
+FY2024 and absent from FY2025, and the unpaired 10-Q with no sibling year.
+
+**Semi-join** — `EXISTS`. Tests existence without multiplying rows the way a join
+does.
+
+A join returning more rows than the left table holds means the join key is not
+unique on the right side. That is a modeling bug surfacing as a query result.
+
+## Window functions solve the core problem
+
+`LAG(...) OVER (PARTITION BY document_id ORDER BY period_end)` gives each version a
+pointer to the previous version of the same document — the comparison this project
+rests on, in one clause, without collapsing rows the way `GROUP BY` would. Not
+covered by SQLBolt.
+
+## Schema decisions
+
+The unique constraint goes on `(document_id, period_end)`, not on `version_label`.
+A document can only have one filing per period end, and labels are strings —
+string-sorting them breaks the moment a filer has a non-calendar fiscal year, which
+Franklin does at September 30.
+
+`chunks` hangs off a `document_version`, never off a `document`. A chunk only means
+something in the context of one specific filing.
+
+Still open: the `ON DELETE` behavior when a `documents` row is removed — cascade,
+restrict, or set null. This is the SQL-level counterpart to the 204-vs-404
+reasoning above.
+
+## An index is a bet on read volume
+
+It costs storage and slows every write touching the column. Three facts decide
+whether one is justified:
+
+- Postgres auto-indexes primary keys and `UNIQUE` constraints, but **not** foreign
+  keys, so join columns stay unindexed until declared. The most commonly missed index.
+- Composite indexes are only usable left to right — the leftmost-prefix rule.
+- Low-cardinality columns barely benefit. If the query an index serves cannot be
+  named, the index should not exist.
+
+## Parameterized queries, always
+
+Placeholders (`$1`, `$2` in node-postgres) with values passed separately, so the
+driver never parses them as SQL. Never template literals or concatenation. Zod
+validates shape at the HTTP boundary and parameterization defends the SQL boundary —
+different boundaries, neither substitutes for the other.
+
+## Migrations
+
+Forward-only: a migration that has run is never edited, and mistakes are corrected
+by a new one. The test is that dropping the database and replaying every migration
+reproduces the schema exactly, otherwise the schema only exists on one laptop. The
+seed script needs to be re-runnable, which is what `ON CONFLICT DO NOTHING` is for.
+
+## N+1
+
+One query for a list, then one more per row. Turn on query logging, hit the list
+endpoint, count the lines — if the count scales with the number of rows, fix it with
+a join or an `IN`. `EXPLAIN ANALYZE` runs the query and reports real timings;
+`EXPLAIN` alone only shows the intended plan.
