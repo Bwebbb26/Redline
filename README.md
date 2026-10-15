@@ -60,10 +60,38 @@ Each release is tagged on GitHub. `0.x` means the interface may still change.
 
 ## Running it
 
+Requires Node 24 (pinned in `.nvmrc`) and Docker Desktop, running.
+
+**1. Start Postgres.** Choose any local password and use it in both step 1 and step 2.
+
+```bash
+docker run -d --name redline-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=YOUR_PASSWORD \
+  -e POSTGRES_DB=redline \
+  -p 127.0.0.1:5432:5432 \
+  -v redline-pgdata:/var/lib/postgresql \
+  postgres:18
+```
+
+After the first run, `docker start redline-db` restarts it. Data persists in the
+`redline-pgdata` volume.
+
+**2. Install and configure.**
+
 ```bash
 nvm use
 npm install
 cp .env.example .env
+```
+
+In `.env`, set `DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/redline`
+with the same password.
+
+**3. Check the database, then start the API.**
+
+```bash
+npm run db:check   # prints the server time and Postgres version, then exits
 npm run dev
 ```
 
@@ -76,6 +104,7 @@ curl -i localhost:3000/health
 | `npm run dev`       | Start with hot reload         |
 | `npm run build`     | Compile TypeScript to `dist/` |
 | `npm run typecheck` | Type check without emitting   |
+| `npm run db:check`  | Confirm Postgres is reachable |
 
 ### API
 

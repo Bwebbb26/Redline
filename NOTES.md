@@ -189,3 +189,20 @@ One query for a list, then one more per row. Turn on query logging, hit the list
 endpoint, count the lines — if the count scales with the number of rows, fix it with
 a join or an `IN`. `EXPLAIN ANALYZE` runs the query and reports real timings;
 `EXPLAIN` alone only shows the intended plan.
+
+## Socket vs TCP: why psql needed no password
+
+`psql` run inside the container connected through a Unix socket, which the Postgres
+image trusts without a password; the app connects over TCP from outside the container,
+which requires one. Postgres chooses the authentication rule per connection in
+`pg_hba.conf`, based on how the connection arrives and where it comes from. RDS only
+offers the TCP route — password and SSL every time — so the app's path is the one
+that matters.
+
+## One pool per process
+
+The pool is created once at module scope and shared, so connections are reused and
+capped at the pool's `max` (10 by default). A new pool per request would open a fresh
+connection — and a Postgres backend process — on every call, leak them if never ended,
+and fail outright once `max_connections` (100 by default) is exhausted. On Lambda each
+instance holds its own pool, which is why task 12 sizes `max` down.

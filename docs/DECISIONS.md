@@ -65,3 +65,26 @@ not protect the application from malformed or untrusted HTTP input.
 **Would change my mind:** if the API became entirely internal with trusted,
 compile-time-controlled callers, or if validation requirements grew beyond
 what Zod expresses clearly, another runtime contract library could be better.
+
+## Database unavailable at startup
+
+**Chose:** start the API even when Postgres is unreachable. `/health` reports process
+liveness only and never queries the database; requests that need the database fail
+through the error handler when it is down.
+
+**Why:** a missing environment variable is a configuration bug that never fixes itself,
+so it fails at boot. An unreachable database is a runtime condition that often heals on
+its own, through restarts, failover, or a network blip. Killing the process over it turns
+a transient problem into an outage. On Lambda, a boot-time check would also add a round
+trip to every cold start and fail cold starts during an RDS failover, and the Lambda Web
+Adapter's readiness check needs `/health` to reflect the app, not its dependencies.
+Database errors still surface as logged, shaped error responses.
+
+**Alternative:** run a connectivity query before `listen()` and exit if it fails. That is
+the better fit for a long-running server under an orchestrator with separate liveness and
+readiness probes, where a crash loop is visible and traffic is held until the app is ready.
+
+**Would change my mind:** moving off Lambda to ECS or Kubernetes, where I would add a
+separate `/health/ready` that checks the database. Or a misconfigured credential
+reaching production unnoticed, which would justify a database-touching post-deploy
+smoke test as a hard gate.
