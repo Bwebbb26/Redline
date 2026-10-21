@@ -88,3 +88,18 @@ readiness probes, where a crash loop is visible and traffic is held until the ap
 separate `/health/ready` that checks the database. Or a misconfigured credential
 reaching production unnoticed, which would justify a database-touching post-deploy
 smoke test as a hard gate.
+
+---
+
+## ORM: Drizzle over Prisma
+
+**Chose:** Drizzle, because its queries read like SQL, so it reinforces the SQL I am
+learning instead of hiding it.
+
+**Why:** migrations stay plain SQL I write by hand, it runs on the existing `pg` pool so
+only the store layer changes, and it has no separate engine to bloat the Lambda image.
+
+**Alternative:** Prisma, more widely adopted with a friendlier API, but it abstracts SQL
+away and manages its own connections.
+
+**Would change my mind:** a team already standardized on Prisma.
