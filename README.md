@@ -91,7 +91,8 @@ with the same password.
 **3. Check the database, then start the API.**
 
 ```bash
-npm run db:check   # prints the server time and Postgres version, then exits
+npm run db:check     # prints the server time and Postgres version, then exits
+npm run db:migrate   # creates the tables; safe to re-run, applies only new migrations
 npm run dev
 ```
 
@@ -99,12 +100,13 @@ npm run dev
 curl -i localhost:3000/health
 ```
 
-| Command             | What it does                  |
-| ------------------- | ----------------------------- |
-| `npm run dev`       | Start with hot reload         |
-| `npm run build`     | Compile TypeScript to `dist/` |
-| `npm run typecheck` | Type check without emitting   |
-| `npm run db:check`  | Confirm Postgres is reachable |
+| Command              | What it does                  |
+| -------------------- | ----------------------------- |
+| `npm run dev`        | Start with hot reload         |
+| `npm run build`      | Compile TypeScript to `dist/` |
+| `npm run typecheck`  | Type check without emitting   |
+| `npm run db:check`   | Confirm Postgres is reachable |
+| `npm run db:migrate` | Apply database migrations     |
 
 ### API
 
