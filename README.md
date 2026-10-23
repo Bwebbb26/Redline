@@ -93,6 +93,7 @@ with the same password.
 ```bash
 npm run db:check     # prints the server time and Postgres version, then exits
 npm run db:migrate   # creates the tables; safe to re-run, applies only new migrations
+npm run db:seed      # loads the corpus from docs/corpus.json; safe to re-run
 npm run dev
 ```
 
@@ -107,6 +108,7 @@ curl -i localhost:3000/health
 | `npm run typecheck`  | Type check without emitting   |
 | `npm run db:check`   | Confirm Postgres is reachable |
 | `npm run db:migrate` | Apply database migrations     |
+| `npm run db:seed`    | Load the demo corpus          |
 
 ### API
 
