@@ -32,7 +32,7 @@ Express owns the HTTP plumbing and dispatch loop: it receives a request, walks t
 
 ## What is still fuzzy
 
-The parts I would reread before an interview are the boundaries between the Express layer and the application layer, how a request moves through middleware into a handler, and how errors travel through that chain.
+The parts I want to revisit are the boundaries between the Express layer and the application layer, how a request moves through middleware into a handler, and how errors travel through that chain.
 
 ## Corpus shape
 
@@ -65,9 +65,9 @@ contain_ the server-owned fields, so an extra `id` in the payload is stripped
 or rejected rather than silently honored. Never build the stored record by
 spreading `req.body` — construct it explicitly from validated fields.
 
-**Interview phrasing:** "My create endpoint validates against a schema that
-excludes server-owned fields, so a client can't set its own id or ownership.
-The response type is the request type plus what the server generates."
+**In short:** the create endpoint validates against a schema that excludes
+server-owned fields, so a client can't set its own id or ownership. The stored type
+is the request type plus what the server generates.
 
 ## Config loading and ES module import order
 
@@ -104,8 +104,8 @@ translates that result into the HTTP `404` response.
 
 # SQL notes
 
-Decisions and gotchas from week 2. The keyword reference lives at sqlbolt.com and
-does not need copying here.
+Decisions and gotchas from designing the schema. For keyword reference, sqlbolt.com
+covers it.
 
 ## Clause order is not written order
 
@@ -205,4 +205,23 @@ The pool is created once at module scope and shared, so connections are reused a
 capped at the pool's `max` (10 by default). A new pool per request would open a fresh
 connection — and a Postgres backend process — on every call, leak them if never ended,
 and fail outright once `max_connections` (100 by default) is exhausted. On Lambda each
-instance holds its own pool, which is why task 12 sizes `max` down.
+instance holds its own pool, so `max` has to be sized down before deploying there.
+
+## Swapping the array for Postgres: what leaked out of the store
+
+The store's contract (names, inputs, outputs) survived the move to Postgres unchanged,
+but its timing did not. The array answered instantly; a database answers over the
+network, so every store function became `async` and the routes had to `await` them.
+That was the only change outside `src/store/`, and no SQL or database knowledge
+leaked into the routes. The lesson: the in-memory store's contract hid an assumption
+that answers arrive immediately, and designing the store as async from the start would
+have kept the routes untouched.
+
+One behavior change is intentional: posting a filing that already exists now returns
+`409` instead of a second `201`, because the database enforces
+`UNIQUE (document_id, period_end)` and the array never could. Deleting a version that a
+comparison depends on also returns `409` (`ON DELETE RESTRICT`, SQLSTATE `23001`).
+
+Gotcha: a missing `await` hands back a Promise. It serialized to `{}`, and in the
+get-by-id route it is always truthy, so the 404 could never fire. Typecheck passed both
+times.

@@ -112,15 +112,15 @@ curl -i localhost:3000/health
 
 ### API
 
-| Method   | Path             | Returns                         |
-| -------- | ---------------- | ------------------------------- |
-| `GET`    | `/health`        | Service status                  |
-| `POST`   | `/documents`     | `201` with the created document |
-| `GET`    | `/documents`     | `{ data: [...] }`               |
-| `GET`    | `/documents/:id` | One document, or `404`          |
-| `DELETE` | `/documents/:id` | `204`                           |
+| Method   | Path             | Returns                                                   |
+| -------- | ---------------- | --------------------------------------------------------- |
+| `GET`    | `/health`        | Service status                                            |
+| `POST`   | `/documents`     | `201` with the created document, or `409` if it exists    |
+| `GET`    | `/documents`     | `{ data: [...] }`                                         |
+| `GET`    | `/documents/:id` | One document, or `404`                                    |
+| `DELETE` | `/documents/:id` | `204`, `404` if missing, or `409` if a comparison uses it |
 
-Errors are returned as `application/problem+json`: `400` for malformed requests, `422` for well-formed requests with invalid values, and `404` for missing resources.
+Errors are returned as `application/problem+json`: `400` for malformed requests, `422` for well-formed requests with invalid values, `404` for missing resources, and `409` when a request conflicts with existing data.
 
 ---
 
@@ -148,7 +148,7 @@ A cheap text diff finds candidate changes, and only those candidates are sent to
 
 ## Design notes
 
-Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](DECISIONS.md).
+Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](docs/DECISIONS.md).
 
 **Sections are first-class.** Chunking a filing into fixed-size windows destroys the structure that makes cross-version alignment possible. Sections are extracted during ingestion, and chunks never span a section boundary.
 
@@ -156,7 +156,7 @@ Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](DEC
 
 **Versions are ordered by date, not by label.** `document_versions` carries a real `period_end` alongside a human label, because not every filer runs on a calendar year. Franklin's fiscal year ends September 30 while the other four end December 31, so `BEN_10K_2024` and `CONSTELLATION_10K_2024` cover different twelve-month periods. Sorting on the label would be a silent bug.
 
-**Nothing outside the store layer knows how data is stored.** Route files never import a database client, so changing persistence is a change to one file rather than a rewrite.
+**Nothing outside the store layer knows how data is stored.** Route files never import a database client. Moving from an in-memory array to PostgreSQL rewrote the store and only made the routes `await` it.
 
 **Retrieved content is untrusted input.** Source documents are third-party text, which makes them a viable indirect prompt-injection vector. Retrieved passages are delimited and marked as data rather than instructions, and output shape is validated before anything is returned.
 

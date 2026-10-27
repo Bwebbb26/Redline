@@ -43,6 +43,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return sendProblem(res, status, detail);
   }
 
-  console.error(err); // NEW: a real bug is now visible to you (Pino replaces this in Week 3)
-  return sendProblem(res, 500, "An unexpected error occurred"); // CHANGED: same body as before, via the helper
+  // Log the real error for debugging; the client only ever sees a generic 500.
+  console.error(err);
+  return sendProblem(res, 500, "An unexpected error occurred");
 };
