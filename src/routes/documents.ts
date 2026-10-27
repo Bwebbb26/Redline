@@ -13,8 +13,8 @@ const router = Router();
 router.get(
   "/",
   validateRequest(documentListQuerySchema, "query"),
-  (req, res) => {
-    const documentList = list();
+  async (req, res) => {
+    const documentList = await list();
     res.json({ data: documentList });
   },
 );
@@ -22,9 +22,9 @@ router.get(
 router.get(
   "/:id",
   validateRequest(documentParamsSchema, "params"),
-  (req, res, next) => {
+  async (req, res, next) => {
     const { id } = req.params as DocumentParams;
-    const document = getById(id);
+    const document = await getById(id);
     if (!document) {
       return next(new HttpError(404, "Document not found"));
     } else {
@@ -33,18 +33,28 @@ router.get(
   },
 );
 
-router.post("/", validateRequest(documentCreateSchema, "body"), (req, res) => {
-  const { filer, cik, form, periodEnd, sourceUrl } = req.body;
-  const storedDocument = create({ filer, cik, form, periodEnd, sourceUrl });
-  res.status(201).json({ data: storedDocument });
-});
+router.post(
+  "/",
+  validateRequest(documentCreateSchema, "body"),
+  async (req, res) => {
+    const { filer, cik, form, periodEnd, sourceUrl } = req.body;
+    const storedDocument = await create({
+      filer,
+      cik,
+      form,
+      periodEnd,
+      sourceUrl,
+    });
+    res.status(201).json({ data: storedDocument });
+  },
+);
 
 router.delete(
   "/:id",
   validateRequest(documentParamsSchema, "params"),
-  (req, res, next) => {
+  async (req, res, next) => {
     const { id } = req.params as DocumentParams;
-    const removedDocument = remove(id);
+    const removedDocument = await remove(id);
     if (!removedDocument) {
       return next(new HttpError(404, "Document not found"));
     } else {
