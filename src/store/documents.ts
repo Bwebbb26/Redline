@@ -1,15 +1,25 @@
 import type { DocumentInput, StoredDocument } from "../schemas/document.js";
-import { pool } from "../db/pool.js";
+import { db, pool } from "../db/pool.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import pg from "pg";
+import { documents, documentVersions } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
-const SELECT_DOCUMENT = `
-  SELECT d.filer, d.cik, d.form, 
-          v.period_end::text AS "periodEnd", 
-          v.source_url AS "sourceUrl",v.id
-  FROM document_versions v
-  JOIN documents d ON d.id = v.document_id
-  `;
+// Columns every document response returns, in response order.
+const documentFields = {
+  filer: documents.filer,
+  cik: documents.cik,
+  form: documents.form,
+  periodEnd: documentVersions.periodEnd,
+  sourceUrl: documentVersions.sourceUrl,
+  id: documentVersions.id,
+};
+
+const selectDocuments = () =>
+  db
+    .select(documentFields)
+    .from(documentVersions)
+    .innerJoin(documents, eq(documents.id, documentVersions.documentId));
 
 export const create = async (
   document: DocumentInput,
@@ -57,20 +67,14 @@ export const create = async (
 };
 
 export const list = async (): Promise<StoredDocument[]> => {
-  const { rows } = await pool.query<StoredDocument>(
-    `${SELECT_DOCUMENT} ORDER BY d.filer, v.period_end`,
-  );
-  return rows;
+  return selectDocuments().orderBy(documents.filer, documentVersions.periodEnd);
 };
 
 export const getById = async (
   id: string,
 ): Promise<StoredDocument | undefined> => {
-  const { rows } = await pool.query<StoredDocument>(
-    `${SELECT_DOCUMENT} WHERE v.id = $1`,
-    [id],
-  );
-  return rows[0];
+  const [row] = await selectDocuments().where(eq(documentVersions.id, id));
+  return row;
 };
 
 export const remove = async (
