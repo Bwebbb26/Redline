@@ -3,7 +3,7 @@ import { db, pool } from "../db/pool.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import pg from "pg";
 import { documents, documentVersions } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 // Columns every document response returns, in response order.
 const documentFields = {
@@ -21,48 +21,53 @@ const selectDocuments = () =>
     .from(documentVersions)
     .innerJoin(documents, eq(documents.id, documentVersions.documentId));
 
+// Drizzle wraps driver errors; the Postgres error with its SQLSTATE code is the cause.
+const pgErrorCode = (err: unknown): string | undefined => {
+  const cause = err instanceof Error ? err.cause : undefined;
+  return cause instanceof pg.DatabaseError ? cause.code : undefined;
+};
+
 export const create = async (
   document: DocumentInput,
 ): Promise<StoredDocument> => {
-  const client = await pool.connect();
-
   try {
-    await client.query("BEGIN");
-
-    const docResult = await client.query<{ id: string }>(
-      `INSERT INTO documents (cik, filer, form)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (cik, form) DO UPDATE SET filer = EXCLUDED.filer
-       RETURNING id`,
-      [document.cik, document.filer, document.form],
-    );
-    const documentId = docResult.rows[0].id;
-
-    const versionResult = await client.query<{ id: string }>(
-      `INSERT INTO document_versions (document_id, version_label, period_end, source_url)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [
-        documentId,
-        `${document.form} ${document.periodEnd}`,
-        document.periodEnd,
-        document.sourceUrl,
-      ],
-    );
-
-    await client.query("COMMIT");
-    return { ...document, id: versionResult.rows[0].id };
+    return await db.transaction(async (tx) => {
+      const [doc] = await tx
+        .insert(documents)
+        .values({
+          cik: document.cik,
+          filer: document.filer,
+          form: document.form,
+        })
+        .onConflictDoUpdate({
+          target: [documents.cik, documents.form],
+          set: { filer: sql`excluded.filer` },
+        })
+        .returning({
+          id: documents.id,
+        });
+      // No conflict handling: a duplicate filing must fail, and becomes a 409 below
+      const [version] = await tx
+        .insert(documentVersions)
+        .values({
+          documentId: doc.id,
+          versionLabel: `${document.form} ${document.periodEnd}`,
+          periodEnd: document.periodEnd,
+          sourceUrl: document.sourceUrl,
+        })
+        .returning({
+          id: documentVersions.id,
+        });
+      return { ...document, id: version.id };
+    });
   } catch (err) {
-    await client.query("ROLLBACK");
-    if (err instanceof pg.DatabaseError && err.code === "23505") {
+    if (pgErrorCode(err) === "23505") {
       throw new HttpError(
         409,
         "A version of this document with that period end already exists",
       );
     }
     throw err;
-  } finally {
-    client.release();
   }
 };
 

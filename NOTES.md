@@ -225,3 +225,65 @@ comparison depends on also returns `409` (`ON DELETE RESTRICT`, SQLSTATE `23001`
 Gotcha: a missing `await` hands back a Promise. It serialized to `{}`, and in the
 get-by-id route it is always truthy, so the 404 could never fire. Typecheck passed both
 times.
+
+## Raw SQL to Drizzle: before and after in `create`
+
+Before (commit `f7ae616`), `create` checked out a client and ran the transaction by hand:
+
+```ts
+const client = await pool.connect();
+try {
+  await client.query("BEGIN");
+  const docResult = await client.query<{ id: string }>(
+    `INSERT INTO documents (cik, filer, form) VALUES ($1, $2, $3)
+     ON CONFLICT (cik, form) DO UPDATE SET filer = EXCLUDED.filer
+     RETURNING id`,
+    [document.cik, document.filer, document.form],
+  );
+  // ...insert the version the same way, then COMMIT
+} catch (err) {
+  await client.query("ROLLBACK");
+  // 23505 → 409
+} finally {
+  client.release();
+}
+```
+
+After:
+
+```ts
+return await db.transaction(async (tx) => {
+  const [doc] = await tx
+    .insert(documents)
+    .values({ cik: document.cik, filer: document.filer, form: document.form })
+    .onConflictDoUpdate({
+      target: [documents.cik, documents.form],
+      set: { filer: sql`excluded.filer` },
+    })
+    .returning({ id: documents.id });
+  // ...insert the version the same way, then return the stored document
+});
+```
+
+Why the change:
+
+- **The transaction was mine to get right on every path.** `BEGIN`, `COMMIT`, `ROLLBACK`
+  and releasing the client were five manual steps; a missed `release()` leaks a
+  connection. `db.transaction` commits when the callback returns, rolls back when it
+  throws, and returns the connection either way.
+- **The SQL was invisible to TypeScript.** `pool.query<{ id: string }>` asserts the row
+  type instead of checking it, so a misspelled column or a placeholder count that does
+  not match the values only fails at runtime. `.values()` is checked against the schema,
+  so a missing `NOT NULL` column or a wrong value type fails typecheck.
+
+Gotchas from the move:
+
+- A Drizzle query does nothing until it is awaited. `pool.query` sends SQL immediately;
+  a builder only describes the query.
+- Inside the callback, use `tx`, never `db`. `db` borrows a different connection, so that
+  query runs outside the transaction and does not roll back with it.
+- Drizzle wraps driver errors in its own `DrizzleQueryError`, with the Postgres error on
+  `.cause`. Checking `err.code` directly stopped matching 23505, and duplicates came back
+  as 500s instead of 409s.
+- `return await` inside the `try`, not `return`. Without `await`, the rejected promise
+  leaves the function before the `catch` can see it.
