@@ -1,5 +1,5 @@
 import type { DocumentInput, StoredDocument } from "../schemas/document.js";
-import { db, pool } from "../db/pool.js";
+import { db } from "../db/pool.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import pg from "pg";
 import { documents, documentVersions } from "../db/schema.js";
@@ -86,22 +86,31 @@ export const remove = async (
   id: string,
 ): Promise<StoredDocument | undefined> => {
   try {
-    const { rows } = await pool.query<StoredDocument>(
-      `WITH deleted AS (
-         DELETE FROM document_versions WHERE id = $1
-         RETURNING id, document_id, period_end, source_url
-       )
-       SELECT d.filer, d.cik, d.form,
-              v.period_end::text AS "periodEnd",
-              v.source_url AS "sourceUrl",
-              v.id
-       FROM deleted v
-       JOIN documents d ON d.id = v.document_id`,
-      [id],
-    );
-    return rows[0];
+    return await db.transaction(async (tx) => {
+      const [deleted] = await tx
+        .delete(documentVersions)
+        .where(eq(documentVersions.id, id))
+        .returning();
+      if (!deleted) return undefined;
+
+      const [doc] = await tx
+        .select({
+          filer: documents.filer,
+          cik: documents.cik,
+          form: documents.form,
+        })
+        .from(documents)
+        .where(eq(documents.id, deleted.documentId));
+
+      return {
+        ...doc,
+        periodEnd: deleted.periodEnd,
+        sourceUrl: deleted.sourceUrl,
+        id: deleted.id,
+      };
+    });
   } catch (err) {
-    if (err instanceof pg.DatabaseError && err.code === "23001") {
+    if (pgErrorCode(err) === "23001") {
       throw new HttpError(
         409,
         "This version is used by comparisons and cannot be deleted",
