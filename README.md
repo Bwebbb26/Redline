@@ -49,12 +49,13 @@ Each release is tagged on GitHub. `0.x` means the interface may still change.
 
 | Next        | Scope                                                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Persistence | PostgreSQL schema with versioned documents, hand-written migrations, indexes, seed from the manifest                                              |
+| Persistence | PostgreSQL schema with versioned documents, SQL migrations, typed queries through Drizzle, indexes, seed from the manifest                         |
 | Cloud       | Container image on AWS Lambda behind API Gateway, RDS PostgreSQL, S3 for filings, infrastructure in AWS CDK, deployed by GitHub Actions over OIDC |
 | Comparison  | Amazon Bedrock (Claude): diff before inference, model tiering, validated structured output, per-request cost logging                              |
+| Quality     | Unit and integration tests with Jest and Supertest, structured logging with Pino, the local stack in Docker Compose                               |
 | Retrieval   | Section-aware ingestion, pgvector embeddings, cross-version section alignment                                                                     |
 | Evaluation  | Eval set scored in CI, deterministic citation checks, prompt-injection guardrails                                                                 |
-| Agent       | Tool-using agent loop with traced runs, exposed as an MCP server                                                                                  |
+| Agent       | Tool-using agent loop with traced runs, exposed as an MCP server, with a single-page demo front end                                               |
 
 ---
 
@@ -142,7 +143,7 @@ Documents are ingested with their structure intact, so sections survive as first
 
 A cheap text diff finds candidate changes, and only those candidates are sent to a model for a materiality judgment. That ordering keeps cost proportional to what actually changed rather than to document length.
 
-**Stack:** Node.js, TypeScript, ES modules, Express 5, Zod. Infrastructure and AI: AWS Lambda, API Gateway, RDS PostgreSQL with pgvector, S3, AWS CDK, Amazon Bedrock behind a provider-agnostic interface, Model Context Protocol, Jest and Supertest, evals in CI, GitHub Actions.
+**Stack:** Node.js, TypeScript, ES modules, Express 5, Zod, PostgreSQL with Drizzle ORM. Infrastructure and AI: AWS Lambda, API Gateway, RDS PostgreSQL with pgvector, S3, AWS CDK, Amazon Bedrock behind a provider-agnostic interface, Model Context Protocol, Jest and Supertest, Pino, evals in CI, GitHub Actions, and a Next.js demo page.
 
 ---
 
@@ -156,7 +157,9 @@ Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](doc
 
 **Versions are ordered by date, not by label.** `document_versions` carries a real `period_end` alongside a human label, because not every filer runs on a calendar year. Franklin's fiscal year ends September 30 while the other four end December 31, so `BEN_10K_2024` and `CONSTELLATION_10K_2024` cover different twelve-month periods. Sorting on the label would be a silent bug.
 
-**Nothing outside the store layer knows how data is stored.** Route files never import a database client. Moving from an in-memory array to PostgreSQL rewrote the store and only made the routes `await` it.
+**Nothing outside the store layer knows how data is stored.** Route files never import a database client. Moving from an in-memory array to PostgreSQL rewrote the store and only made the routes `await` it; moving the store from raw SQL to Drizzle changed nothing outside it.
+
+**Authentication is managed, not hand-built.** The API has no login of its own. A real deployment would put a managed identity service such as Amazon Cognito in front of API Gateway rather than hand-roll password storage and token handling, which is a well-known source of security bugs and not where this project's value is.
 
 **Retrieved content is untrusted input.** Source documents are third-party text, which makes them a viable indirect prompt-injection vector. Retrieved passages are delimited and marked as data rather than instructions, and output shape is validated before anything is returned.
 

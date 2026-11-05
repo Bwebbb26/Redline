@@ -154,9 +154,10 @@ Franklin does at September 30.
 `chunks` hangs off a `document_version`, never off a `document`. A chunk only means
 something in the context of one specific filing.
 
-Still open: the `ON DELETE` behavior when a `documents` row is removed — cascade,
-restrict, or set null. This is the SQL-level counterpart to the 204-vs-404
-reasoning above.
+`ON DELETE` follows one rule: cascade what can be regenerated, restrict what represents
+work. Chunks cascade with their version, because re-ingesting rebuilds them. Versions
+restrict on documents, and comparisons restrict on versions, because a comparison's
+result cost model calls and cannot be rebuilt for free.
 
 ## An index is a bet on read volume
 
@@ -181,7 +182,8 @@ different boundaries, neither substitutes for the other.
 Forward-only: a migration that has run is never edited, and mistakes are corrected
 by a new one. The test is that dropping the database and replaying every migration
 reproduces the schema exactly, otherwise the schema only exists on one laptop. The
-seed script needs to be re-runnable, which is what `ON CONFLICT DO NOTHING` is for.
+seed script needs to be re-runnable, which is what `ON CONFLICT DO UPDATE` is for. Not
+`DO NOTHING`: on a conflict it returns no row, so there is no id for the next insert.
 
 ## N+1
 
