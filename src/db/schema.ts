@@ -3,6 +3,7 @@ import {
   check,
   date,
   foreignKey,
+  index,
   integer,
   pgTable,
   text,
@@ -115,5 +116,7 @@ export const comparisons = pgTable(
       "comparisons_status_check",
       sql`${t.status} IN ('pending', 'running', 'completed', 'failed')`,
     ),
+    index("comparisons_base_version_id_idx").on(t.baseVersionId),
+    index("comparisons_target_version_id_idx").on(t.targetVersionId),
   ],
 );

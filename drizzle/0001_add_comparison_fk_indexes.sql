@@ -1,0 +1,2 @@
+CREATE INDEX "comparisons_base_version_id_idx" ON "comparisons" USING btree ("base_version_id");--> statement-breakpoint
+CREATE INDEX "comparisons_target_version_id_idx" ON "comparisons" USING btree ("target_version_id");
