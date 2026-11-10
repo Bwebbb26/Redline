@@ -149,7 +149,7 @@ A cheap text diff finds candidate changes, and only those candidates are sent to
 
 ## Design notes
 
-Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](docs/DECISIONS.md).
+Decisions and the reasoning behind them. The full log is in [`DECISIONS.md`](docs/DECISIONS.md), and the tables and how they relate are in [`schema.md`](docs/schema.md).
 
 **Sections are first-class.** Chunking a filing into fixed-size windows destroys the structure that makes cross-version alignment possible. Sections are extracted during ingestion, and chunks never span a section boundary.
 
