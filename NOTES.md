@@ -170,6 +170,24 @@ whether one is justified:
 - Low-cardinality columns barely benefit. If the query an index serves cannot be
   named, the index should not exist.
 
+### What each index serves
+
+Primary keys are left out: every lookup by `id` uses them.
+
+| Index | Came from | Query it serves |
+|---|---|---|
+| `documents_cik_form_key` | `UNIQUE (cik, form)` | the upsert's conflict check on every create and seed |
+| `document_versions_document_id_period_end_key` | `UNIQUE (document_id, period_end)` | the duplicate-filing check behind the 409, and, by the leftmost rule, the foreign-key check when a document is deleted |
+| `chunks_version_id_section_position_key` | `UNIQUE (version_id, section, position)` | loading a version's chunks in order, and the cascade that deletes them with their version |
+| `comparisons_base_version_id_idx` | added on purpose | the `ON DELETE RESTRICT` check on every version delete, and finding the comparisons a version starts |
+| `comparisons_target_version_id_idx` | added on purpose | the same check and lookup for the other side of a comparison |
+
+The two `comparisons` indexes are separate because of the leftmost rule: one composite
+index on `(base_version_id, target_version_id)` would serve lookups by base only.
+
+Not indexed on purpose: `document_versions.source_url`. Nothing looks a filing up by its
+URL, so `EXPLAIN` showing a sequential scan there is correct.
+
 ## Parameterized queries, always
 
 Placeholders (`$1`, `$2` in node-postgres) with values passed separately, so the
