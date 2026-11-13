@@ -35,8 +35,19 @@ const parseNodeEnv = (raw: string | undefined): NodeEnv => {
   }
   return value;
 };
+
+const parsePoolMax = (raw: string | undefined): number => {
+  if (raw === undefined || raw.trim() === "") return 10;
+  const max = Number(raw);
+  if (!Number.isInteger(max) || max < 1) {
+    throw new Error(`Invalid DB_POOL_MAX: ${raw}`);
+  }
+  return max;
+};
+
 export const config = {
   port: parsePort(process.env.PORT),
   nodeEnv: parseNodeEnv(process.env.NODE_ENV),
   databaseUrl: requireEnv("DATABASE_URL"),
+  dbPoolMax: parsePoolMax(process.env.DB_POOL_MAX),
 } as const;
